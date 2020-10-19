@@ -1,26 +1,108 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+// import _ from "lodash";
+import React from "react";
+import Datasheet from "./components/Datasheet";
+import axios from "axios";
+import "./components/react-datasheet.css";
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+export default class BasicSheet extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      grid: [
+        [{ value: "" }, { value: "" }],
+        [{ value: "" }, { value: "" }],
+      ],
+      dataset: [],
+      data: [],
+    };
+  }
+  valueRenderer = (cell) => cell.value;
+  onCellsChanged = (changes) => {
+    const grid = this.state.grid;
+    changes.forEach(({ cell, row, col, value }) => {
+      grid[row][col] = { ...grid[row][col], value };
+    });
+    changes.forEach(({ cell, row, col, value }) => {
+      axios
+        .post("http://127.0.0.1:8080/api/table", {
+          y: row,
+          x: col,
+          post: value,
+        })
+        .then((response) => console.log(response));
+      // grid[row][col] = { ...grid[row][col], value };
+    });
+    this.setState({ grid });
+  };
+  onContextMenu = (e, cell, i, j) =>
+    cell.readOnly ? e.preventDefault() : null;
+
+  componentDidMount() {
+    fetch("http://127.0.0.1:8080/api/table")
+      .then((response) => {
+        if (response.status > 400) {
+          console.log("fail");
+        }
+        return response.json();
+      })
+      .then((result) => {
+        this.setState(
+          {
+            data: result,
+          },
+          () => {
+            this.load_data();
+          }
+        );
+      });
+    let dataset = [];
+    let base = [];
+    for (let i = 0; i < 10; i++) {
+      for (let j = 0; j < 10; j++) {
+        dataset.push({ value: "____" });
+      }
+      base.push(dataset);
+      dataset = [];
+    }
+    if (this.state.grid !== base) {
+      this.setState({ grid: base });
+    }
+  }
+
+  load_data() {
+    let newGrid = this.state.grid;
+    if (this.state.data.length > 0) {
+      for (let i = 0; i < this.state.data.length; i++) {
+        let row = this.state.data[i]["y"];
+        let col = this.state.data[i]["x"];
+        console.log(row);
+        console.log(col);
+        let newValue = this.state.data[i]["post"];
+        let newGrid = this.state.grid;
+
+        newGrid[row][col] = { value: newValue };
+        console.log(newGrid[row][col]);
+
+        if (this.state.grid !== newGrid) {
+          this.setState({ grid: newGrid });
+        }
+        console.log(newGrid);
+      }
+    }
+    // let serial = JSON.stringify(newGrid);
+    // axios
+    //   .post("http://127.0.0.1:8080/api/table", { post: serial })
+    //   .then((response) => console.log(response));
+  }
+
+  render() {
+    return (
+      <Datasheet
+        data={this.state.grid}
+        valueRenderer={this.valueRenderer}
+        onContextMenu={this.onContextMenu}
+        onCellsChanged={this.onCellsChanged}
+      />
+    );
+  }
 }
-
-export default App;
