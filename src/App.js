@@ -23,14 +23,11 @@ export default class BasicSheet extends React.Component {
       grid[row][col] = { ...grid[row][col], value };
     });
     changes.forEach(({ cell, row, col, value }) => {
-      axios
-        .post("http://127.0.0.1:8080/api/table", {
-          y: row,
-          x: col,
-          post: value,
-        })
-        .then((response) => console.log(response));
-      // grid[row][col] = { ...grid[row][col], value };
+      axios.post("http://127.0.0.1:8080/api/table", {
+        y: row,
+        x: col,
+        post: value,
+      });
     });
     this.setState({ grid });
   };
@@ -41,7 +38,6 @@ export default class BasicSheet extends React.Component {
     fetch("http://127.0.0.1:8080/api/table")
       .then((response) => {
         if (response.status > 400) {
-          console.log("fail");
         }
         return response.json();
       })
@@ -59,7 +55,7 @@ export default class BasicSheet extends React.Component {
     let base = [];
     for (let i = 0; i < 10; i++) {
       for (let j = 0; j < 10; j++) {
-        dataset.push({ value: "____" });
+        dataset.push({ value: "" });
       }
       base.push(dataset);
       dataset = [];
@@ -75,24 +71,17 @@ export default class BasicSheet extends React.Component {
       for (let i = 0; i < this.state.data.length; i++) {
         let row = this.state.data[i]["y"];
         let col = this.state.data[i]["x"];
-        console.log(row);
-        console.log(col);
+
         let newValue = this.state.data[i]["post"];
         let newGrid = this.state.grid;
 
         newGrid[row][col] = { value: newValue };
-        console.log(newGrid[row][col]);
 
         if (this.state.grid !== newGrid) {
           this.setState({ grid: newGrid });
         }
-        console.log(newGrid);
       }
     }
-    // let serial = JSON.stringify(newGrid);
-    // axios
-    //   .post("http://127.0.0.1:8080/api/table", { post: serial })
-    //   .then((response) => console.log(response));
   }
 
   render() {
